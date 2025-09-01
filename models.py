@@ -1,24 +1,23 @@
 import tensorflow as tf
 import tensorflow.keras.layers as layers
 
-def create_policy_net(obs_shape, num_actions, dense_units=128, depth=2, 
-                      activation="tanh"):
-    inputs = layers.Input(shape=obs_shape)
+def create_network(input_shape, model_type, num_actions=None, dense_units=128, depth=2, activation="tanh"):
+    inputs = layers.Input(shape=input_shape)
     x = inputs
     current_units = dense_units
     for _ in range(depth):
         x = layers.Dense(current_units, activation=activation)(x)
         current_units = max(current_units // 2, 32)
-    outputs = layers.Dense(num_actions, activation='softmax')(x)
-    return tf.keras.Model(inputs=inputs, outputs=outputs)
 
-def create_value_net(state_shape, dense_units=128, depth=2, 
-                    activation="tanh"):
-    inputs = layers.Input(shape=state_shape)
-    x = inputs
-    current_units = dense_units
-    for _ in range(depth):
-        x = layers.Dense(current_units, activation=activation)(x)
-        current_units = max(current_units // 2, 32)
-    outputs = layers.Dense(1)(x)
+    if model_type == 'policy':
+        if num_actions is None:
+            raise ValueError("num_actions must be provided for model_type 'policy'")
+        outputs = layers.Dense(num_actions, activation='softmax')(x)
+    
+    elif model_type == 'value':
+        outputs = layers.Dense(1)(x)
+        
+    else:
+        raise ValueError(f"Unknown model_type: '{model_type}'. Must be 'policy' or 'value'.")
+
     return tf.keras.Model(inputs=inputs, outputs=outputs)

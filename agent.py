@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
 
-from models import create_policy_net, create_value_net
+from models import create_network
 
 class MAPPOBuffer:
     def __init__(self, obs_shape, state_shape, buffer_size, n_agents):
@@ -118,12 +118,24 @@ class MAPPO:
         self.observation_space = env.observation_space.shape
         self.action_space = int(env.action_space.n)
 
-        #self.policy_net = [create_policy_net(self.observation_space, self.action_space) for _ in range(num_agents)]
-        self.dense_units = dense_units
-        self.policy_net = create_policy_net(self.observation_space, self.action_space,dense_units=self.dense_units,depth=net_depth,activation=activation) # Single policy for all agents
+        self.policy_net = create_network(
+            input_shape=self.observation_space,
+            model_type='policy',
+            num_actions=self.action_space,
+            dense_units=dense_units,
+            depth=net_depth,
+            activation=activation
+        )
+
         state_dim = self.observation_space[0] * self.num_agents
         state_shape_tuple = (state_dim,)
-        self.value_net = create_value_net(state_shape_tuple,dense_units=self.dense_units,depth=net_depth,activation=activation)
+        self.value_net = create_network(
+            input_shape=state_shape_tuple,
+            model_type='value',
+            dense_units=dense_units,
+            depth=net_depth,
+            activation=activation
+        )
         self.policy_optimizer = tf.keras.optimizers.Adam(lr_policy)
         self.value_optimizer = tf.keras.optimizers.Adam(lr_value)
 
